@@ -34,7 +34,7 @@ Get player salary table
 ``` python
 # Get Jalen's salaries
 jalen = player_page('roseja01')
-jalen.player_data['salaries'] #Returns Jalen Rose's 'totals table (career stats by year)
+jalen.player_data['salaries'] #Returns Jalen's salary by year
 
 ```
 
