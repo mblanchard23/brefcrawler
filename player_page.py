@@ -53,13 +53,23 @@ class player_page:
 				continue
 
 			self.player_data[tablename] = item.tbody
-		self.totals = self.player_data['totals']
+		self.totals = self.player_data['totals'] #Special attribute for the totals table
 
 def ifnull(*args):
 	for elem in args:
 		if elem:
 			return elem
 		return 'null'
+
+def ifnull2(generator):
+	for string in generator:
+		if not string:
+			return null
+		else:
+			return string
+		# if elem:
+		# 	return elem
+		# return 'null'
 
 def tablify(soup_table,delimiter=",",qualifier=None):
 	#Converts a HTML table into a character separated table. Option to set delimiter and cell qualifier
@@ -69,7 +79,7 @@ def tablify(soup_table,delimiter=",",qualifier=None):
 		for row in soup_table.find_all('tr'):
 			row_string = ''
 			for cell in row.find_all('td'):
-				row_string += ifnull(cell.string) + delimiter
+				row_string += ifnull2(cell.strings) + delimiter
 			table_out += row_string[0:len(row_string)-len(delimiter)] + '\n'
 
 		return table_out
@@ -78,10 +88,24 @@ def tablify(soup_table,delimiter=",",qualifier=None):
 		for row in soup_table.find_all('tr'):
 			row_string = ''
 			for cell in row.find_all('td'):
-				row_string += qualifier + cell.string + qualifier + delimiter
+				row_string += qualifier + ifnull(cell.string) + qualifier + delimiter
 			table_out += row_string[0:len(row_string)-len(delimiter)] + '\n'
 
 		return table_out
+
+
+# Grab list of all players - Split this into separate
+def get_players(letter):
+	url = "http://www.basketball-reference.com/players/{letter}/"
+	url = url.format(letter=letter)
+	resp = requests.get(url)
+	if resp.status_code == 200:
+		soup = BeautifulSoup(resp.text)
+		return soup # get_rid
+		playertable = soup.find_all('table')[0].tbody 
+		return playertable
+	else:
+		return None
 
 def player_tablify(soup_table,delimiter=",",qualifier=None):
 	#Used in grabbing all player details
@@ -108,18 +132,6 @@ def player_tablify(soup_table,delimiter=",",qualifier=None):
 			else:
 				continue
 		return table_out
-
-def get_players(letter):
-	url = "http://www.basketball-reference.com/players/{letter}/"
-	url = url.format(letter=letter)
-	resp = requests.get(url)
-	if resp.status_code == 200:
-		soup = BeautifulSoup(resp.text)
-		return soup # get_rid
-		playertable = soup.find_all('table')[0].tbody 
-		return playertable
-	else:
-		return None
 
 
 def cycle():
