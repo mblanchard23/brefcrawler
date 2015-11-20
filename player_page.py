@@ -100,7 +100,7 @@ def get_players(letter):
 	url = url.format(letter=letter)
 	resp = requests.get(url)
 	if resp.status_code == 200:
-		soup = BeautifulSoup(resp.text)
+		soup = BeautifulSoup(resp.text,'html.parser')
 		return soup # get_rid
 		playertable = soup.find_all('table')[0].tbody 
 		return playertable
