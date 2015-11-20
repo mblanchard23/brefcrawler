@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import sqlite3
 
 baseurl = "http://www.basketball-reference.com/players/{firstletter}/{playerid}.html"
 testurl = "http://www.basketball-reference.com/players/r/roseja01.html"
@@ -71,13 +72,18 @@ def ifnull2(generator):
 		# 	return elem
 		# return 'null'
 
-def tablify(soup_table,delimiter=",",qualifier=None):
+def seasons_tablify(soup_table,delimiter=",",qualifier=None,player_id=None):
 	#Converts a HTML table into a character separated table. Option to set delimiter and cell qualifier
 	table_out = ''
 
 	if not qualifier:
 		for row in soup_table.find_all('tr'):
-			row_string = ''
+			if player_id:
+				row_string = player_id + delimiter
+			else:
+				row_string = ''
+			
+
 			for cell in row.find_all('td'):
 				row_string += ifnull2(cell.strings) + delimiter
 			table_out += row_string[0:len(row_string)-len(delimiter)] + '\n'
@@ -86,7 +92,10 @@ def tablify(soup_table,delimiter=",",qualifier=None):
 
 	else:
 		for row in soup_table.find_all('tr'):
-			row_string = ''
+			if player_id:
+				row_string = qualifier + player_id + qualifier + delimiter
+			else:
+				row_string = ''
 			for cell in row.find_all('td'):
 				row_string += qualifier + ifnull(cell.string) + qualifier + delimiter
 			table_out += row_string[0:len(row_string)-len(delimiter)] + '\n'
@@ -95,6 +104,7 @@ def tablify(soup_table,delimiter=",",qualifier=None):
 
 
 # Grab list of all players - Split this into separate
+
 def get_players(letter):
 	url = "http://www.basketball-reference.com/players/{letter}/"
 	url = url.format(letter=letter)
@@ -125,18 +135,41 @@ def player_tablify(soup_table,delimiter=",",qualifier=None):
 	else:
 		for row in soup_table.tbody.find_all('tr'):
 			if row.a:
-				row_string = ifnull(row.a['href']) + delimiter
+				row_string = qualifier + ifnull(row.a['href'].split('/')[-1][:-5]) + qualifier + delimiter
 				for cell in row.find_all('td'):
-					row_string += qualifier + cell.string + qualifier + delimiter
+					row_string += qualifier + ifnull(cell.string) + qualifier + delimiter
 				table_out += row_string[0:len(row_string)-len(delimiter)] + '\n'
 			else:
 				continue
 		return table_out
 
+def tbt(table,delimiter=','):
+	table = table.split('\n')
+	for i,v in enumerate(table):
+		table[i] = v.split(delimiter)
+	return table
 
-def cycle():
-	a = ''
-	alphabet = 'bcd'
+
+def create_player_SQL_table():
+	conn = sqlite3.connect('db.sqlite')
+	c = conn.cursor()
+	alphabet = 'abcdefghijklmnopqrstuvwyz'
 	for letter in alphabet:
-		a += player_tablify(get_players(letter))
+		print "Grabbing players for %s" % letter.upper()
+		ht_table = get_players(letter)
+		delim_table = player_tablify(ht_table,delimiter='\t')
+		player_lst = tbt(delim_table,'\t')
+		print "%d players found" % len(player_lst)
+		succeeded = 0
+		failed = 0
+
+		for item in player_lst:
+			if len(item) == 9:
+				c.execute("insert into players values(?,?,?,?,?,?,?,?,?)",item)
+				succeeded += c.rowcount
+			else:
+				failed += 1
+		
+		print "%d inserts succeeded\n%d inserts failed" % (succeeded,failed)
+		conn.commit()
 
