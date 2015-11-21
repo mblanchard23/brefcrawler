@@ -1,6 +1,8 @@
 # basketball-reference-crawler
 A few Python classes to scrape data from Basketball Reference
-Requires BeautifulSoup & Python requests
+Requires BeautifulSoup (pip install BeautifulSoup4)
+& Python requests (pip install requests)
+
 ### Methods & Classes
 *player_page()* 
 Class takes a Basketball Reference player ID from and returns an object with the tables from a player's page. The object has a player_data dictionary attribute which stores the tables on the player page using the following keys:
@@ -26,7 +28,7 @@ player_data = {	"totals": ""
 		,"salaries": ""}
 
 ```
-*tablify(soup_table,delimiter,qualifier)*
+*seasons_tablify(soup_table,delimiter,qualifier)*
 Turns a soup HTML table into a delimited string. Defaults to comma delimited and no qualifier
 
 ### Examples
@@ -38,10 +40,10 @@ jalen.player_data['salaries'] #Returns Jalen's salary by year
 
 ```
 
-Get a comma delimited table  
+Get a comma delimited table with player's career stats by season
 ``` python
 jalen = player_page('roseja01')
-print tablify(jalen.totals)
+print seasons_tablify(jalen.totals)
 # 1994-95,22,DEN,NBA,SF,81,37,1798,227,500,.454,36,114,.316,191,386,.495,.490,173,234,.739,57,160,217,389,65,22,160,206,663
 # 1995-96,23,DEN,NBA,SG,80,37,2134,290,604,.480,32,108,.296,258,496,.520,.507,191,277,.690,46,214,260,495,53,39,234,229,803
 # 1996-97,24,IND,NBA,SF,66,6,1188,172,377,.456,21,72,.292,151,305,.495,.484,117,156,.750,27,94,121,155,57,18,107,136,482
@@ -64,3 +66,7 @@ print tablify(jalen.totals)
 
 
 ```
+
+### SQLite Support
+table_queries() returns a Python list of table creation queries for SQL DBs.
+create_player_SQL_table() can be used to retrieve all the players from BR and insert them into your table (created above) along with the default information from the page
