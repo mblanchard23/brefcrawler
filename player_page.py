@@ -173,3 +173,22 @@ def create_player_SQL_table():
 		print "%d inserts succeeded\n%d inserts failed" % (succeeded,failed)
 		conn.commit()
 
+def c():
+	conn = sqlite3.connect('db.sqlite')
+	return conn.cursor()
+
+def insert_player(player_id):
+	conn = sqlite3.connect('db.sqlite')
+	c = conn.cursor()
+
+	seasons_insert = 'insert into season_stats values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)' 
+	player = player_page(player_id)
+	lst = tbt(seasons_tablify(player.totals,player_id=player.player_id))
+	rows_inserted = 0
+	for season in lst:
+		if len(season) > 1:
+			c.execute(seasons_insert,season)
+			rows_inserted += c.rowcount
+	conn.commit()	
+	c.close()
+	return rows_inserted
