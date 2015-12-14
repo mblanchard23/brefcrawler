@@ -34,3 +34,18 @@ def table_queries():
 					,PF int
 					,PTS int)"""
 	return [players,season_stats]
+
+def create_tables():
+	import sqlite3
+	lst = table_queries()
+	conn = sqlite3.connect('db.sqlite')
+	c = conn.cursor()
+	for query in lst:
+		try:
+			c.execute(query)
+			conn.commit()
+		except:
+			print 'Error'
+
+	conn.close()
+

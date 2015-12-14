@@ -2,8 +2,11 @@ from player_page import *
 from table_setup import *
 
 def testcase():
-	kobe = player_page('bryanko01')
-	return kobe
+	ys = player_page('yuesu01')
+	return ys.totals
+
+ys = testcase()
+
 
 #kobe = testcase()
 #print 'Kobe loaded....'

@@ -65,12 +65,10 @@ def ifnull(*args):
 def ifnull2(generator):
 	for string in generator:
 		if not string:
-			return null
+			return ''
 		else:
-			return string
-		# if elem:
-		# 	return elem
-		# return 'null'
+			return str(string)
+	
 
 def seasons_tablify(soup_table,delimiter=",",qualifier=None,player_id=None):
 	#Converts a HTML table into a character separated table. Option to set delimiter and cell qualifier
@@ -85,7 +83,15 @@ def seasons_tablify(soup_table,delimiter=",",qualifier=None,player_id=None):
 			
 
 			for cell in row.find_all('td'):
-				row_string += ifnull2(cell.strings) + delimiter
+				try:
+					row_string += ifnull2(cell.strings) + delimiter
+				except TypeError:
+					row_string += '' + delimiter
+				except UnicodeEncodeError:
+					pass
+
+
+			
 			table_out += row_string[0:len(row_string)-len(delimiter)] + '\n'
 
 		return table_out
@@ -97,7 +103,13 @@ def seasons_tablify(soup_table,delimiter=",",qualifier=None,player_id=None):
 			else:
 				row_string = ''
 			for cell in row.find_all('td'):
-				row_string += qualifier + ifnull(cell.string) + qualifier + delimiter
+				try:
+					row_string += qualifier + ifnull2(cell.string) + qualifier + delimiter
+				except TypeError:
+					row_string += qualifier + '' + qualifier + delimiter
+				except UnicodeEncodeError:
+					pass
+	
 			table_out += row_string[0:len(row_string)-len(delimiter)] + '\n'
 
 		return table_out
@@ -187,8 +199,21 @@ def insert_player(player_id):
 	rows_inserted = 0
 	for season in lst:
 		if len(season) > 1:
-			c.execute(seasons_insert,season)
-			rows_inserted += c.rowcount
+			try:
+				c.execute(seasons_insert,season)
+				rows_inserted += c.rowcount
+			except sqlite3.ProgrammingError:
+				pass
+
+				
 	conn.commit()	
 	c.close()
 	return rows_inserted
+
+def cycle_players():
+	c = sqlite3.connect('db.sqlite').cursor()
+	c.execute('select player_id,name from players')
+	a = c.fetchall()
+	for item in a:
+		print 'Inserting %s' % (str(item[1]))
+		insert_player(item[0])
