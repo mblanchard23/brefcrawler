@@ -59,8 +59,8 @@ def convert_HTML_players_table_to_df(t):
 
 	'''Enrichment past the basic table provided by Basketball Ref'''
 	
-	'''1. Identify All Stars and remove the Star from their Names!'''
-	df['all_star'] = df.Player.map(lambda x:'*' in x)
+	'''1. Identify Hall of Famers and remove the asterisk from their Names!'''
+	df['hall_of_fame'] = df.Player.map(lambda x:'*' in x)
 	df.Player = df.Player.map(lambda x: x.replace('*',''))
 
 	'''2. Grab Player IDs ''' 
