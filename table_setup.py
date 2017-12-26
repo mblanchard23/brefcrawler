@@ -45,7 +45,7 @@ def create_tables():
 			c.execute(query)
 			conn.commit()
 		except:
-			print 'Error'
+			print('Error')
 
 	conn.close()
 

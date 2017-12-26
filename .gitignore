@@ -1,0 +1,6 @@
+*.csv
+*.pyc
+*.ipynb
+*.db
+*.sqlite
+secrets.py

@@ -1,7 +1,6 @@
 # basketball-reference-crawler
 A few Python classes to scrape data from Basketball Reference
-Requires BeautifulSoup (pip install BeautifulSoup4)
-& Python requests (pip install requests)
+Requires BeautifulSoup, requests and pandas
 
 ### Methods & Classes
 *player_page()* 
