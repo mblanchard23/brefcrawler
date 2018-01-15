@@ -1,0 +1,5 @@
+lxml
+pandas
+requests
+bs4
+html5lib
