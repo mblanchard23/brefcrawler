@@ -1,76 +1,92 @@
 ''' Get Per Season Level data from the Player Page '''
-
 import requests, pandas
-from bs4 import BeautifulSoup
-import sqlite3
+from bs4 import BeautifulSoup, Comment
 
-def get_tables_from_html_text(ht_as_bs_tag):
-	tables = ['<table class' + x for x in  str(ht_as_bs_tag).split('<table class')]
-	t2 = [t.split('</table>')[0] + '</table>' for t in tables]
-	soups = [BeautifulSoup(t,'html.parser') for t in t2]
-	soup_dict = {q.table.get('id'):pandas.read_html(str(q)) for q in soups if q}
-	dataframes = [pandas.read_html(t) for t in t2] 
-	return soups, dataframes, soup_dict
 
-def get_player_tables(player_id):
-	baseurl = "http://www.basketball-reference.com/players/{firstletter}/{playerid}.html"
-	req = requests.get(baseurl.format(firstletter=player_id[:1],playerid=player_id))
-	return get_tables_from_html_text( BeautifulSoup(req.text,'html.parser'))
-
-def get_player_html(player_id):
+def getpp(player_id):
 	baseurl = "http://www.basketball-reference.com/players/{firstletter}/{playerid}.html"
 	return requests.get(baseurl.format(firstletter=player_id[:1],playerid=player_id))
 
 
 
-def test():
-	return get_player_tables('bryanko01')
+
+
+def test(player_id):
+	return get_player_data(player_id)
 
 class player_page:
-
 	def __init__(self,player_id):
 		self.player_id = player_id
-		self.player_data = {
-		"totals": ""
-		,"per_game": ""
-		,"per_minute": ""
-		,"per_poss": ""
-		,"advanced": ""
-		,"shooting": ""
-		,"advanced_pbp": ""
-		,"playoffs_totals": ""
-		,"playoffs_per_game": ""
-		,"playoffs_per_minute": ""
-		,"playoffs_per_poss": ""
-		,"playoffs_advanced": ""
-		,"playoffs_shooting": ""
-		,"playoffs_advanced_pbp": ""
-		,"sim_thru": ""
-		,"sim_career": ""
-		,"college": ""
-		,"leaderboard": ""
-		,"salaries": ""
-		}
 
-		self.player_url = baseurl.format(firstletter=player_id[0],playerid=player_id)
-		resp = requests.get(self.player_url)
-		if resp.status_code == 200:
-			resp = resp.text
-		else:
-			resp = None
+		self.all_tables = self.get_player_data()
+		
+		self.totals = self.all_tables.get('totals', pandas.DataFrame())
+		self.per_game = self.all_tables.get('per_game', pandas.DataFrame())
+		self.per_minute = self.all_tables.get('per_minute', pandas.DataFrame())
+		self.per_poss = self.all_tables.get('per_poss', pandas.DataFrame())
+		self.advanced = self.all_tables.get('advanced', pandas.DataFrame())
+		self.shooting = self.all_tables.get('shooting', pandas.DataFrame())
+		self.advanced_pbp = self.all_tables.get('advanced_pbp', pandas.DataFrame())
+		self.playoffs_totals = self.all_tables.get('playoffs_totals', pandas.DataFrame())
+		self.playoffs_per_game = self.all_tables.get('playoffs_per_game', pandas.DataFrame())
+		self.playoffs_per_minute = self.all_tables.get('playoffs_per_minute', pandas.DataFrame())
+		self.playoffs_per_poss = self.all_tables.get('playoffs_per_poss', pandas.DataFrame())
+		self.playoffs_advanced = self.all_tables.get('playoffs_advanced', pandas.DataFrame())
+		self.playoffs_shooting = self.all_tables.get('playoffs_shooting', pandas.DataFrame())
+		self.playoffs_advanced_pbp = self.all_tables.get('playoffs_advanced_pbp', pandas.DataFrame())
+		self.sim_thru = self.all_tables.get('sim_thru', pandas.DataFrame())
+		self.sim_career = self.all_tables.get('sim_career', pandas.DataFrame())
+		self.college = self.all_tables.get('college', pandas.DataFrame())
+		self.leaderboard = self.all_tables.get('leaderboard', pandas.DataFrame())
+		self.salaries = self.all_tables.get('salaries', pandas.DataFrame())
+		
+	def get_player_page_as_request(self): 
+		baseurl = "http://www.basketball-reference.com/players/{firstletter}/{playerid}.html"
+		return requests.get(baseurl.format(firstletter = self.player_id[0]
+								,playerid = self.player_id))
 
-		self.all = resp
 
-		soup = BeautifulSoup(resp.encode('utf8'),'html.parser')
-		tables = soup.find_all('table')
+	def get_tables_from_html(self,reqtext):
+		''' Take Basketball Reference player page and return {TableName:DataFrame}
+			dictionary'''
+		soup = BeautifulSoup(reqtext,'html.parser')
+		''' Parse data tables out of HTML on page'''
+		tables = soup.findAll('table')
+		html_df_dict = {}
+		for t in tables:
+			df = pandas.read_html(str(t))[0]
+			df.drop([q for q in df.columns if type(q) == str and  'Unnamed:' in q]
+					, inplace=True
+					, axis=1) 
+			
+			html_df_dict[t.get('id')] = df
 
-		for item in tables:
+		''' Parse the remaining tables out of commented HTML'''
+		comments = soup.findAll(text=lambda text: isinstance(text, Comment))
+		table_soups = []
+		commented_df_dict = {}
+		for c in comments:
+			commentsoup = BeautifulSoup(c,'html.parser')
+			table_soups += commentsoup.findAll('table')
+
+		for t in table_soups:
+			df = pandas.read_html(str(t))[0]
 			try:
-				tablename = item['id']
-				
-			except KeyError:
-				continue
+				df.drop(index=df[df.Season=='Career'].index,inplace=True)
+			except:
+				pass
+			# If we still have the Unnamed columns popping up, add this back in...
 
-			self.player_data[tablename] = item.tbody
-		self.totals = self.player_data['totals'] #Special attribute for the totals table
+			df.drop([q for q in df.columns if type(q) == str and  'Unnamed:' in q]
+					, inplace=True
+					, axis=1) 
+			
+			commented_df_dict[t.get('id')] = df
+
+		return {**html_df_dict, **commented_df_dict}
+
+
+	def get_player_data(self):
+		req = getpp(self.player_id)
+		return self.get_tables_from_html(req.text)
 
