@@ -3,4 +3,5 @@
 *.ipynb
 *.db
 *.sqlite
+.idea
 secrets.py
