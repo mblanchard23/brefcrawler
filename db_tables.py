@@ -1,6 +1,6 @@
 import os
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, Table, Column, Integer, String, Date, Boolean
+from sqlalchemy import create_engine, Table, Column, Integer, String, Date, Boolean, ForeignKey, UniqueConstraint, Float
 from sqlalchemy.ext.declarative import declarative_base
 
 db_uri = os.environ.get('BREF_DB_URI')
@@ -39,33 +39,44 @@ class Players(Base):
     def __repr__(self):
         return '{player_name}'.format(player_name=self.player_name)
 
-# DOB Transformation
+class Player_Season_Totals(Base):
+    __tablename__ = 'player_season_totals'
+    id = Column(String(64),primary_key=True,nullable=False)
+    player_id = Column(String(16),ForeignKey('players.id'),nullable=False)
+    season = Column(String(8),nullable=True)
+    age = Column(Integer,nullable=True)
+    team = Column(String(8),nullable=True)
+    league = Column(String(8),nullable=True)
+    position = Column(String(8),nullable=True)
+    games_played = Column(Integer,nullable=True)
+    games_started = Column(Integer,nullable=True)
+    minutes_played = Column(Integer,nullable=True)
+    field_goals = Column(Integer,nullable=True)
+    field_goals_attempted = Column(Integer,nullable=True)
+    field_goal_percentage = Column(Float,nullable=True)
+    three_point_fg_made = Column(Integer,nullable=True)
+    three_point_fg_attempted = Column(Integer,nullable=True)
+    three_point_percentage = Column(Float,nullable=True)
+    two_point_fg_made = Column(Integer,nullable=True)
+    two_point_fg_attempted = Column(Integer,nullable=True)
+    two_point_fg_percentage = Column(Float,nullable=True)
+    effective_fg_percentage = Column(Float,nullable=True)
+    ft_made = Column(Integer,nullable=True)
+    ft_attempted = Column(Integer,nullable=True)
+    ft_percentage = Column(Integer,nullable=True)
+    offensive_rebounds = Column(Integer,nullable=True)
+    defensive_rebounds = Column(Integer,nullable=True)
+    total_rebounds = Column(Integer,nullable=True)
+    assists = Column(Integer,nullable=True)
+    steals = Column(Integer,nullable=True)
+    blocks = Column(Integer,nullable=True)
+    turnovers = Column(Integer,nullable=True)
+    personal_fouls = Column(Integer,nullable=True)
+    points = Column(Integer,nullable=True)
 
 
+    def __repr__(self):
+            return '%s - %s' % (self.player_id, self.season)
 
-def insert_players(session,lst):
-    ''' Inserts a lst of player dicts'''
-    for player in lst:
-        try:
-            p = Players(**player)
-            session.add(p)
-            session.commit()
-        except:
-            print('%s already exists, skipping' % p.player_name)
-            session.rollback()
-            continue
-
-    return None
-
-def insert_all_players_to_db():
-    from get_players import get_players_dataframe
-    letters_of_alphabet = 'abcdefghijklmnopqrstuvwxyz'
-    for letter in letters_of_alphabet:
-        try:
-            df = get_players_dataframe(letter)
-            insert_players(session,df.to_dict(orient='records'))
-           
-        except:
-            print('Letter not found: %s' % letter)
 
 
