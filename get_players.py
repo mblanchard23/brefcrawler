@@ -9,7 +9,9 @@ from bs4 import BeautifulSoup
 
 baseurl = "http://www.basketball-reference.com/players/{firstletter}/{playerid}.html"
 players_url = "http://www.basketball-reference.com/players/{firstletter}/"
-bref_date_transformation = lambda x: datetime.datetime.strptime(str(x),'%B %d, %Y').strftime('%Y-%m-%d') if pandas.notnull(x) else None
+bref_date_transformation = lambda x: datetime.datetime.strptime(str(x), '%B %d, %Y').strftime(
+    '%Y-%m-%d') if pandas.notnull(x) else None
+
 
 def validate_players_table(df):
     if df.columns.tolist() == ['Player', 'From', 'To', 'Pos', 'Ht', 'Wt', 'Birth Date', 'College']:
@@ -92,27 +94,16 @@ def get_players_dataframe(letter):
     df = convert_HTML_players_table_to_df(t)
 
     '''Rename BRef's columns to friendlier DB ones'''
-    df.rename(columns={'player_id':'id'
-                            ,'Player':'player_name'
-                            ,'From':'year_from'
-                            ,'To':'year_to'
-                            ,'Pos':'position'
-                            ,'Ht':'height'
-                            ,'Wt':'weight'
-                            ,'Birth Date':'birth_date'
-                            ,'College':'college'
-                            ,'hall_of_fame':'hall_of_fame'}
-              ,inplace=True)
+    df.rename(columns={'player_id': 'id'
+        , 'Player': 'player_name'
+        , 'From': 'year_from'
+        , 'To': 'year_to'
+        , 'Pos': 'position'
+        , 'Ht': 'height'
+        , 'Wt': 'weight'
+        , 'Birth Date': 'birth_date'
+        , 'College': 'college'
+        , 'hall_of_fame': 'hall_of_fame'}
+              , inplace=True)
     df.birth_date = df.birth_date.map(bref_date_transformation)
-
-    return df
-
-
-def insert_all_players():
-    letters_in_alphabet = 'abcdefghijklmnopqrstuvwxyz'
-    for letter in letters_of_alphabet:
-        try:
-            df = get_players_dataframe(letter)
-            pass
-        except:
-            print('Letter not found: %s' % letter)
+    return df.where(pandas.notnull, None)

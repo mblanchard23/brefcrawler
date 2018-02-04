@@ -80,3 +80,6 @@ class Player_Season_Totals(Base):
 
 
 
+class Player_Gamelog_Totals(Base):
+    __tablename__ = 'player_gamelog'
+    id = Column(String(64),primary_key=True,nullable=False)
