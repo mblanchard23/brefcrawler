@@ -1,5 +1,6 @@
-from db_tables import session, Players, Player_Season_Totals
+from db_tables import session, Players, Player_Season_Totals, Player_Gamelog_Totals
 from player_page import player_page
+from player_gamelog_page import player_career_gamelog
 from logs import log_client
 from get_players import get_players_dataframe
 
@@ -22,7 +23,6 @@ def insert_players(session, lst):
 
 
 def insert_all_players():
-
     letters_of_alphabet = 'abcdefghijklmnopqrstuvwxyz'
     for letter in letters_of_alphabet:
         try:
@@ -60,3 +60,31 @@ def insert_list_player_season_totals(list_of_player_ids):
             insert_player_season_totals(player_id)
         except:
             log_client.captureMessage('Insert Failed for {player_id}'.format(player_id=player_id))
+
+
+def insert_player_career_gamelog(player_id):
+    pcg = player_career_gamelog(player_id)
+    game_list = [Player_Gamelog_Totals(**game) for game in pcg.career_gamelog.to_dict(orient='records')]
+    for game in game_list:
+        session.add(game)
+
+    try:
+        session.commit()
+        return None
+
+    except:
+        log_client.captureException()
+        session.rollback()
+        return 'Error'
+
+def insert_career_gamelog_list(list_of_player_ids):
+    for player_id  in list_of_player_ids:
+
+        if session.query(Player_Gamelog_Totals).filter(Player_Gamelog_Totals.player_id == player_id).all() != []:
+            print('%s already exists' % player_id)
+            continue
+
+        outcome = insert_player_career_gamelog(player_id)
+
+        if outcome == 'Error':
+            log_client.captureMessage('Unable to insert gamelogs for %s' % player_id)

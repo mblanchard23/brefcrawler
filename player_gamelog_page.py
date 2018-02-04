@@ -12,18 +12,23 @@ class player_season_gamelog:
         self.season = self.parse_season(season)
         self.get_gamelogs(player_id=self.player_id, season=self.season)
 
-        self.season_gamelog = self.season_gamelog.pipe(self.filter_column_headers) \
-            .pipe(self.rename_gamelog_headers) \
-            .pipe(self.home_away) \
-            .pipe(self.win_loss) \
-            .pipe(self.create_primary_key)
+        if not self.season_gamelog.empty:
+            self.season_gamelog = self.season_gamelog.pipe(self.filter_column_headers) \
+                .pipe(self.rename_gamelog_headers) \
+                .pipe(self.home_away) \
+                .pipe(self.win_loss) \
+                .pipe(self.create_primary_key) \
+                .pipe(self.handle_nan)\
+                .pipe(self.approved_column_names)
 
         if not self.playoff_gamelog.empty:
             self.playoff_gamelog = self.playoff_gamelog.pipe(self.filter_column_headers) \
                 .pipe(self.rename_gamelog_headers) \
                 .pipe(self.home_away) \
                 .pipe(self.win_loss) \
-                .pipe(self.create_primary_key)
+                .pipe(self.create_primary_key) \
+                .pipe(self.handle_nan) \
+                .pipe(self.approved_column_names)
 
     def parse_season(self, season_value):
         assert type(season_value) in (int, str), 'Season format incorrect'
@@ -69,7 +74,7 @@ class player_season_gamelog:
                 dataframe_dict[table_id] = df
 
         self.season_gamelog = dataframe_dict.get('pgl_basic', pandas.DataFrame())
-        self.playoff_gamelog = dataframe_dict.get('pgl_basic_playoffs', pandas.DataFrame)
+        self.playoff_gamelog = dataframe_dict.get('pgl_basic_playoffs', pandas.DataFrame())
 
         if not self.season_gamelog.empty:
             self.season_gamelog['game_type'] = 'season'
@@ -127,7 +132,10 @@ class player_season_gamelog:
         return df.rename(columns=map)
 
     def home_away(self, df):
-        df['home_away'] = df.home_away.apply(lambda x: 'H' if pandas.isnull(x) else 'A')
+        if 'home_away' in df.columns:
+            df['home_away'] = df.home_away.apply(lambda x: 'H' if pandas.isnull(x) else 'A')
+        else:
+            df['home_away'] = None
         return df
 
     def win_loss(self, df):
@@ -142,9 +150,22 @@ class player_season_gamelog:
             df['result_margin'] = None
         return df
 
-    def create_primary_key(self, df):
-        df['id'] = df.apply(lambda x: '%s - %s - %s' % (x['season'], x['game_type'], str(x['rank']).zfill(2)), axis=1)
+    def approved_column_names(self, df):
+        approved_columns = set(['id','player_id','season','age','team','league','position','games_played','games_started','minutes_played','field_goals','field_goals_attempted','field_goal_percentage','three_point_fg_made','three_point_fg_attempted','three_point_percentage','two_point_fg_made','two_point_fg_attempted','two_point_fg_percentage','effective_fg_percentage','ft_made','ft_attempted','ft_percentage','offensive_rebounds','defensive_rebounds','total_rebounds','assists','steals','blocks','turnovers','personal_fouls','points'])
+        df_columns = set(df.columns)
+        union = list(approved_columns.intersection(df_columns))
+        df = df[union]
         return df
+
+    def create_primary_key(self, df):
+        df['player_id'] = self.player_id
+        df['id'] = df.apply(
+            lambda x: '%s - %s - %s - %s' % (x['player_id'], x['season'], x['game_type'], str(x['rank']).zfill(2)),
+            axis=1)
+        return df
+
+    def handle_nan(self, df):
+        return df.where(pandas.notnull, None)
 
 
 class player_career_gamelog:
@@ -156,13 +177,13 @@ class player_career_gamelog:
 
         for season in self.career_seasons:
             psg = player_season_gamelog(player_id=self.player_id, season=season)
-            if not psg.season_gamelog.empty:
-                self.gamelog_list.append(psg.season_gamelog)
+            # if not psg.season_gamelog.empty:
+            self.gamelog_list.append(psg.season_gamelog)
 
-            if not psg.playoff_gamelog.empty:
-                self.gamelog_list.append(psg.playoff_gamelog)
+            # if not psg.playoff_gamelog.empty:
+            self.gamelog_list.append(psg.playoff_gamelog)
 
-        self.career_gamelog = pandas.concat(self.gamelog_list)
+        self.career_gamelog = pandas.concat(self.gamelog_list).where(pandas.notnull, None)
 
 
 def tommy_test():
