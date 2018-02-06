@@ -18,8 +18,8 @@ class player_season_gamelog:
                 .pipe(self.home_away) \
                 .pipe(self.win_loss) \
                 .pipe(self.create_primary_key) \
-                .pipe(self.handle_nan)\
-                .pipe(self.approved_column_names)
+                .pipe(self.handle_nan) \
+                # .pipe(self.approved_column_names)
 
         if not self.playoff_gamelog.empty:
             self.playoff_gamelog = self.playoff_gamelog.pipe(self.filter_column_headers) \
@@ -28,7 +28,7 @@ class player_season_gamelog:
                 .pipe(self.win_loss) \
                 .pipe(self.create_primary_key) \
                 .pipe(self.handle_nan) \
-                .pipe(self.approved_column_names)
+                # .pipe(self.approved_column_names)
 
     def parse_season(self, season_value):
         assert type(season_value) in (int, str), 'Season format incorrect'
@@ -151,7 +151,15 @@ class player_season_gamelog:
         return df
 
     def approved_column_names(self, df):
-        approved_columns = set(['id','player_id','season','age','team','league','position','games_played','games_started','minutes_played','field_goals','field_goals_attempted','field_goal_percentage','three_point_fg_made','three_point_fg_attempted','three_point_percentage','two_point_fg_made','two_point_fg_attempted','two_point_fg_percentage','effective_fg_percentage','ft_made','ft_attempted','ft_percentage','offensive_rebounds','defensive_rebounds','total_rebounds','assists','steals','blocks','turnovers','personal_fouls','points'])
+        approved_columns = {'rank', 'game_played', 'date', 'age', 'team', 'home_away', 'opponent', 'winlossmargin',
+                            'games_started'
+            , 'minutes_played', 'field_goals', 'field_goals_attempted', 'field_goal_percentage',
+                            'three_point_fg_made'
+            , 'three_point_fg_attempted', 'three_point_percentage', 'ft_made', 'ft_attempted', 'ft_percentage',
+                            'offensive_rebounds'
+            , 'defensive_rebounds', 'total_rebounds', 'assists', 'steals', 'blocks', 'turnovers', 'personal_fouls',
+                            'points'
+            , 'game_score', 'plus_minus', 'season', 'game_type', 'result', 'result_margin', 'player_id', 'id'}
         df_columns = set(df.columns)
         union = list(approved_columns.intersection(df_columns))
         df = df[union]
@@ -177,10 +185,7 @@ class player_career_gamelog:
 
         for season in self.career_seasons:
             psg = player_season_gamelog(player_id=self.player_id, season=season)
-            # if not psg.season_gamelog.empty:
             self.gamelog_list.append(psg.season_gamelog)
-
-            # if not psg.playoff_gamelog.empty:
             self.gamelog_list.append(psg.playoff_gamelog)
 
         self.career_gamelog = pandas.concat(self.gamelog_list).where(pandas.notnull, None)

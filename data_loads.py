@@ -4,6 +4,11 @@ from player_gamelog_page import player_career_gamelog
 from logs import log_client
 from get_players import get_players_dataframe
 
+
+def get_all_player_ids():
+    return [x.id for x in session.query(Players).all()]
+
+
 ''' Players List '''
 
 
@@ -77,14 +82,17 @@ def insert_player_career_gamelog(player_id):
         session.rollback()
         return 'Error'
 
+
 def insert_career_gamelog_list(list_of_player_ids):
-    for player_id  in list_of_player_ids:
+    for player_id in list_of_player_ids:
 
         if session.query(Player_Gamelog_Totals).filter(Player_Gamelog_Totals.player_id == player_id).all() != []:
             print('%s already exists' % player_id)
             continue
 
-        outcome = insert_player_career_gamelog(player_id)
-
-        if outcome == 'Error':
-            log_client.captureMessage('Unable to insert gamelogs for %s' % player_id)
+        try:
+            outcome = insert_player_career_gamelog(player_id)
+            if outcome == 'Error':
+                log_client.captureMessage('Unable to insert gamelogs for %s' % player_id)
+        except:
+            log_client.captureException()
