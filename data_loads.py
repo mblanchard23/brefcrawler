@@ -1,6 +1,6 @@
 from db_tables import session, Players, Player_Season_Totals, Player_Gamelog_Totals
 from player_page import player_page
-from player_gamelog_page import player_career_gamelog
+from player_gamelog_page import player_career_gamelog, player_season_gamelog
 from logs import log_client
 from get_players import get_players_dataframe
 
@@ -66,6 +66,14 @@ def insert_list_player_season_totals(list_of_player_ids):
         except:
             log_client.captureMessage('Insert Failed for {player_id}'.format(player_id=player_id))
 
+def insert_player_season_gamelog(player_id,season):
+    psg = player_season_gamelog(player_id,season)
+    lst = [Player_Gamelog_Totals(**game) for game in psg.season_gamelog.to_dict(orient='records') ]
+    for game in lst:
+        session.merge(game)
+    session.commit()
+
+    return None
 
 def insert_player_career_gamelog(player_id):
     pcg = player_career_gamelog(player_id)
