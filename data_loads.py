@@ -17,7 +17,7 @@ def insert_players(session, lst):
     for player in lst:
         try:
             p = Players(**player)
-            session.add(p)
+            session.merge(p)
             session.commit()
         except:
             print('%s already exists, skipping' % p.player_name)
@@ -48,7 +48,7 @@ def insert_player_season_totals(player_id):
     for season_summary in lst:
         pst = Player_Season_Totals(**season_summary)
 
-        session.add(pst)
+        session.merge(pst)
 
         try:
             session.commit()
@@ -71,7 +71,7 @@ def insert_player_career_gamelog(player_id):
     pcg = player_career_gamelog(player_id)
     game_list = [Player_Gamelog_Totals(**game) for game in pcg.career_gamelog.to_dict(orient='records')]
     for game in game_list:
-        session.add(game)
+        session.merge(game)
 
     try:
         session.commit()
