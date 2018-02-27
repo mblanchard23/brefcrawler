@@ -59,8 +59,15 @@ def add_daily_update_to_queue():
 
 
 def poll_queue():
+    consecutive_empty_returns = 0
     while True:
         player = pop_message()
-        insert_player_season_gamelog(**player)
-        time.sleep(5)
-
+        if player:
+            insert_player_season_gamelog(**player)
+            time.sleep(5)
+            consecutive_empty_returns = 0
+        else:
+            consecutive_empty_returns += 1
+            if consecutive_empty_returns >= 10:
+                break
+            time.sleep(10)
