@@ -4,7 +4,6 @@ from player_gamelog_page import player_career_gamelog, player_season_gamelog
 from logs import log_client
 from get_players import get_players_dataframe
 
-
 def get_all_player_ids():
     return [x.id for x in session.query(Players).all()]
 
@@ -104,3 +103,5 @@ def insert_career_gamelog_list(list_of_player_ids):
                 log_client.captureMessage('Unable to insert gamelogs for %s' % player_id)
         except:
             log_client.captureException()
+
+
