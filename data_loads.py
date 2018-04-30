@@ -68,6 +68,10 @@ def insert_list_player_season_totals(list_of_player_ids):
 def insert_player_season_gamelog(player_id,season):
     psg = player_season_gamelog(player_id,season)
     lst = [Player_Gamelog_Totals(**game) for game in psg.season_gamelog.to_dict(orient='records') ]
+
+    if not psg.playoff_gamelog.empty:
+        lst += [Player_Gamelog_Totals(**game) for game in psg.playoff_gamelog.to_dict(orient='records') ]
+
     for game in lst:
         session.merge(game)
     session.commit()
