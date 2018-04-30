@@ -71,3 +71,7 @@ def poll_queue():
             if consecutive_empty_returns >= 10:
                 break
             time.sleep(10)
+
+
+if __name__ == '__main__':
+	add_daily_update_to_queue()
